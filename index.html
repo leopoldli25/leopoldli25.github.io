@@ -1,76 +1,136 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <title>My Website</title>
-    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Leopold Li</title>
+    <meta name="description" content="Leopold Li, game designer and programmer. Projects, work, and competitive history.">
+    <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="topblock">
-        <h1>Leopold Li</h1>
-        <p><a href="mailto:leopoldli25@gmail.com">leopoldli25@gmail.com</a> | <a href="https://www.linkedin.com/in/leopold-li/">LinkedIn</a> | <a href="https://github.com/leopoldli25">GitHub</a></p>
-    </div>
-    <div class="intro">
-        <p>Hello, my name is Leopold Li and I am a 3rd year at UCLA studying Mathematics of Computation. I am an aspiring game designer/software engineer who is extremely passionate about software and video games.</p>
-    </div>
-    <div class="projects">
-        <div class="project">
-            <h2>Polygon Paradise</h2>
-            <img src="images/polygon.png" alt="Screenshot of Polygon Paradise" />
-            <p>Polygon Paradise is a city-builder game with a simple art style. Build your base and upgrade buildings to generate resources. Unlock, upgrade, and equip polygons to make them stronger and use them in the procedurally generated dungeon to get rewards. Watch them battle in a physics-based autobattler
-            <br /><br /><a href="https://drive.google.com/drive/folders/1SlxcjvVWnZXknPrfqrd8dW5qsvogGdgO">Download</a></p>
+
+<header class="top">
+    <h1>Leopold Li</h1>
+    <p class="intro">I design and program games. I finished my B.S. in Mathematics of Computation at UCLA in 2025 and I'm now working on an M.S. in Computer Science at Georgia Tech. When I'm not making games I'm usually playing strategy games at a high level.</p>
+    <p class="links">
+        <a href="mailto:leopoldli25@gmail.com">leopoldli25@gmail.com</a>
+        <a href="https://www.linkedin.com/in/leopold-li/">LinkedIn</a>
+        <a href="https://github.com/leopoldli25">GitHub</a>
+    </p>
+</header>
+
+<main>
+
+<section>
+    <h2>Games</h2>
+
+    <article class="game no-shot">
+        <div class="text">
+            <h3>Penguin Party</h3>
+            <p class="what">Multiplayer party and co-op extraction game, 1 to 8 players. Unity, C#.</p>
+            <p>Six modes in one game, including co-op extraction, baseball, and a party board game with 50 minigames. Online play was laggy in early tests and players hated it, so I made a rule for every mode: it has to be turn-based, simulated the same way on every machine from a shared match seed, or played in separate lanes for each player. That rule shaped every mode I added after.</p>
+            <p>I also wrote the design pillars and a short premise brief, and I checked every new minigame, hazard, and item against them so the 50 minigames would still feel like one game.</p>
         </div>
-        <div class="project">
-            <h2>TND Card Game</h2>
-            <img src="images/tndcg1.png" alt="Screenshot of TND Card Game">
-            <p>
-                This is a 1v1 card game with online multiplayer with over 30 unique cards. Includes a functional deckbuilder and the ability to easily import and export decklists. Connect with other players by entering a code such as "ABCD" and clicking host, and then have them enter the same code and click connect.
-            </p>
+    </article>
+
+    <article class="game">
+        <figure class="shot">
+            <img src="images/polygon.png" alt="Polygon Paradise dungeon screen showing three polygon units with their stats" width="800" height="600" loading="lazy">
+        </figure>
+        <div class="text">
+            <h3>Polygon Paradise</h3>
+            <p class="what">City builder with a physics-based autobattler. Unity, C#.</p>
+            <p>Build your base and upgrade buildings to make resources. Unlock, upgrade, and equip polygons, then send them into a procedurally generated dungeon where they fight on their own. Enemies change their strategy based on how earlier battles went.</p>
+            <p>I balanced it from one config file, using combat results, economy numbers, and App Store retention data to tune the difficulty curve and rewards. It also has offline progression, saving and loading, a research tree, haptics, and push notifications.</p>
+            <p><a href="https://drive.google.com/drive/folders/1SlxcjvVWnZXknPrfqrd8dW5qsvogGdgO">Download</a></p>
         </div>
-        <div class="project">
-            <h2>Minimize Loss</h2>
-            <img src="images/minimizeloss.png" alt="Minimize Loss" />
-            <p>
-                This is a simple minigame that I helped make for the EGaDS Mega Micro Jam 2022.
-                This game is a take on the famous Trolley Problem with the goal being to save as many people as possible by quickly choosing the path with the least people.<br /><br />
-                <a href="https://mysticalbilly.itch.io/minimize-loss">Play in Browser (Loud Sound Warning)</a><br />
-                <a href="https://egads-austin.itch.io/egads-mega-micro-jam-2022">Combined Game Jam Link</a>
-            </p>
+    </article>
+
+    <article class="game">
+        <figure class="shot">
+            <img src="images/tndcg1.png" alt="TND Card Game board with two rows of five card slots" width="800" height="600" loading="lazy">
+        </figure>
+        <div class="text">
+            <h3>TND Card Game</h3>
+            <p class="what">1v1 online card game. Unity, C#, Unity Relay.</p>
+            <p>A card game with over 30 unique cards, a deckbuilder, and decklists you can export and import as text. To play online, one player types a code like "ABCD" and hosts, and the other types the same code and connects.</p>
+            <p>About 30 people played it regularly, and I changed cards and rules based on what they told me.</p>
         </div>
-        <div class="project">
-            <h2>Let's Gooooo</h2>
-            <img src="images/letsgo.png" alt="Let's Gooooo" />
-            <p>
-                This is a hiking trail recommender website that I helped make for a hackathon. I designed the front-end using HTML, CSS, and Flutter.<br /><br />
-                <a href="https://devpost.com/software/let-s-gooooo">Devpost Link</a>
-            </p>
+    </article>
+
+    <article class="game">
+        <figure class="shot">
+            <img src="images/minimizeloss.png" alt="Minimize Loss: a trolley heading toward a fork in the tracks with people on each path" width="800" height="600" loading="lazy">
+        </figure>
+        <div class="text">
+            <h3>Minimize Loss</h3>
+            <p class="what">Microgame for the EGaDS Mega Micro Jam 2022.</p>
+            <p>A quick take on the trolley problem. You have a few seconds to pick the track with the fewest people on it.</p>
+            <p><a href="https://mysticalbilly.itch.io/minimize-loss">Play in browser</a> (it's loud)<br>
+            <a href="https://egads-austin.itch.io/egads-mega-micro-jam-2022">Full jam collection</a></p>
         </div>
-        <div class="project">
-            <h2>Stable Stick</h2>
-            <img src="images/stablestick.png" alt="Stable Stick" />
-            <p>
-                This is a gimbal that I helped design and code for a selfie-based hackathon. <br /><br />
-                <a href="https://devpost.com/software/b-3yo9vl">Devpost Link</a>
-            </p>
-        </div>
-        <div class="project">
-            <h2>Autopark</h2>
-            <img src="images/autopark.png" alt="Autopark" />
-            <p>
-                This is a device that helps students learn how to park in tight spaces.<br /><br />
-                <a href="https://devpost.com/software/autopark-c93d0b">Devpost Link</a>
-            </p>
-        <!--
-        </div>
-        <div class="project">
-            <h2>TeamfightTactics</h2>
-            <img src="images/tftcareer.png" alt="TeamfightTactics" />
-            <p>
-            My Competitive TeamfightTactics History.<br /><br />
-            </p>
-        </div>
-        -->
-    </div>
+    </article>
+</section>
+
+<section>
+    <h2>Work</h2>
+    <dl class="jobs">
+        <dt><span class="org"><strong>HandsGames</strong>, Wuhan, China</span><span class="when">Feb – Mar 2026</span></dt>
+        <dd>Software engineer intern. Built gameplay system features in C# and Unity for a Tokyo Ghoul mobile game.</dd>
+
+        <dt><span class="org"><strong>FriendTimes</strong>, Suzhou, China</span><span class="when">Dec 2025 – Feb 2026</span></dt>
+        <dd>Software engineer intern. Built a teammate AI that combines Goal-Oriented Action Planning with a neural network, and cut AI overhead enough to raise frame rate 15% in fights with lots of units.</dd>
+    </dl>
+</section>
+
+<section>
+    <h2>Competitive</h2>
+    <p class="ranks">Consistently Challenger in Teamfight Tactics as Neonify. Legend in Hearthstone. Master in League of Legends.</p>
+    <figure class="record">
+        <img src="images/tftcareer.png" alt="Table of TFT tournament results from 2023 and 2024, with approximate total winnings of $710" width="800" height="600" loading="lazy">
+        <figcaption>My TFT tournament results from 2023 and 2024.</figcaption>
+    </figure>
+</section>
+
+<section>
+    <h2>Other projects</h2>
+    <ul class="other">
+        <li>
+            <img src="images/letsgo.png" alt="" width="800" height="600" loading="lazy">
+            <div>
+                <h3><a href="https://devpost.com/software/let-s-gooooo">Let's Gooooo</a></h3>
+                <p>Hackathon project that recommends hiking trails. I built the front end in HTML, CSS, and Flutter.</p>
+            </div>
+        </li>
+        <li>
+            <img src="images/stablestick.png" alt="" width="800" height="600" loading="lazy">
+            <div>
+                <h3><a href="https://devpost.com/software/b-3yo9vl">Stable Stick</a></h3>
+                <p>A phone gimbal I helped design and program for a selfie-themed hackathon.</p>
+            </div>
+        </li>
+        <li>
+            <img src="images/autopark.png" alt="" width="800" height="600" loading="lazy">
+            <div>
+                <h3><a href="https://devpost.com/software/autopark-c93d0b">Autopark</a></h3>
+                <p>A device that helps new drivers practice parking in tight spaces.</p>
+            </div>
+        </li>
+        <li class="no-img">
+            <div>
+                <h3>Age classifier</h3>
+                <p>A small CNN in PyTorch that guesses age from a face. 68.3% accuracy on an 800-image dataset, compared with 64.8% for logistic regression with PCA.</p>
+            </div>
+        </li>
+    </ul>
+</section>
+
+</main>
+
+<footer>
+    <p>Last updated November 2026.</p>
+</footer>
+
 </body>
 </html>

@@ -1,67 +1,289 @@
+@font-face {
+    font-family: "Archivo";
+    src: url("fonts/archivo.woff2") format("woff2");
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-display: swap;
+}
+
+/* Colors come from the original site's teal, kept so the site still feels like mine. */
+:root {
+    --page: #e3ebed;
+    --ink: #15272d;
+    --muted: #4d6168;
+    --teal: #2c6b7d;
+    --teal-dark: #1d4f5e;
+    --line: #b7c9ce;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 17px;
+}
+
 body {
-    font-family: "Montserrat", Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: rgb(65, 122, 141);
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Archivo", Arial, sans-serif;
+    font-variation-settings: "wdth" 100;
+    line-height: 1.55;
 }
 
-.intro {
-    padding: 20px;
-    text-align: center;
-    margin: auto;
-    border: 1px solid black;
-    background-color: lightblue;
-    border-radius: 10px;
-    width: 50%;
+main,
+.top,
+footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 28px;
 }
 
-.projects {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin: 0;
-    padding: 0;
+a {
+    color: var(--teal);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
 }
 
-.project {
-    margin: 10px;
-    width: 45%; /* Default width to 45% (2 projects per row) */
-    display: flex;
-    justify-content: space-between;
-    flex-direction: column;
-    border: 1px solid black;
-    background-color: lightblue;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
+a:hover {
+    color: var(--teal-dark);
+    text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 3px;
 }
 
 img {
-    order: 2;
-    width: 100%;
+    display: block;
+    max-width: 100%;
     height: auto;
-    object-fit: cover;
 }
 
-.project h2, .project p {
-    order: 1;
+/* Header */
+
+.top {
+    padding-top: 72px;
+    padding-bottom: 40px;
 }
 
+.top h1 {
+    margin: 0 0 20px;
+    font-size: clamp(3rem, 10vw, 6.2rem);
+    font-weight: 800;
+    font-variation-settings: "wdth" 125;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--teal-dark);
+}
 
-.topblock {
+.intro {
+    max-width: 36em;
+    margin: 0 0 18px;
+    font-size: 1.18rem;
+}
+
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
     margin: 0;
-    padding: 10px;
-    background-color: rgb(65, 122, 141);
-    text-align: center;
 }
 
-.topblock a {
-    color: black;
+/* Sections */
+
+section {
+    padding: 36px 0 20px;
 }
 
+section h2 {
+    margin: 0 0 28px;
+    padding-top: 12px;
+    border-top: 4px solid var(--ink);
+    font-size: 1.6rem;
+    font-weight: 750;
+    font-variation-settings: "wdth" 115;
+    letter-spacing: -0.01em;
+}
 
-@media (max-width: 768px) {
-    .project {
-        width: 100%; 
+h3 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variation-settings: "wdth" 108;
+}
+
+/* Games */
+
+.game {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 32px;
+    align-items: start;
+    margin-bottom: 52px;
+}
+
+.shot {
+    margin: 0;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+}
+
+/* Penguin Party has no screenshots yet, so its text runs in two columns instead. */
+.game.no-shot {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.game.no-shot .text {
+    columns: 2;
+    column-gap: 32px;
+}
+
+.game.no-shot .text p {
+    break-inside: avoid;
+}
+
+.game.no-shot h3,
+.game.no-shot .what {
+    column-span: all;
+}
+
+.text p {
+    margin: 0 0 12px;
+    max-width: 34em;
+}
+
+.what {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+/* Work */
+
+.jobs {
+    margin: 0;
+}
+
+.jobs dt {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 1.1rem;
+}
+
+.jobs dt .when {
+    color: var(--muted);
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.jobs dd {
+    margin: 4px 0 24px;
+    max-width: 38em;
+}
+
+/* Competitive */
+
+.ranks {
+    max-width: 36em;
+    margin: 0 0 24px;
+    font-size: 1.12rem;
+}
+
+.record {
+    margin: 0;
+    max-width: 640px;
+}
+
+.record img {
+    border: 1px solid var(--line);
+}
+
+.record figcaption {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+/* Other projects */
+
+.other {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 32px;
+}
+
+.other li {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.other li.no-img {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.other img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--line);
+}
+
+.other h3 {
+    font-size: 1.08rem;
+}
+
+.other p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Footer */
+
+footer {
+    padding-top: 28px;
+    padding-bottom: 48px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* Small screens */
+
+@media (max-width: 760px) {
+    html {
+        font-size: 16px;
+    }
+
+    .top {
+        padding-top: 44px;
+    }
+
+    .game {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .other {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .other li {
+        grid-template-columns: 104px minmax(0, 1fr);
+    }
+
+    .game.no-shot .text {
+        columns: 1;
+    }
+
+    .jobs dt {
+        flex-direction: column;
+        gap: 0;
     }
 }
