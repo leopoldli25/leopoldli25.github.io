@@ -25,7 +25,9 @@ body {
 
 .project {
     margin: 10px;
-    width: 45%; /* Default width to 45% (2 projects per row) */
+    box-sizing: border-box;
+    width: calc(100% - 20px); /* One project per row */
+    max-width: 900px;
     display: flex;
     justify-content: space-between;
     flex-direction: column;
@@ -107,11 +109,4 @@ img {
 
 .topblock a {
     color: black;
-}
-
-
-@media (max-width: 768px) {
-    .project {
-        width: 100%; 
-    }
 }
