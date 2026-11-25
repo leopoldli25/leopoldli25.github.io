@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <title>Write | Leopold Li</title>
+    <link rel="stylesheet" type="text/css" href="/styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+</head>
+<body>
+    <div class="topblock">
+        <h1>Leopold Li</h1>
+        <nav class="tabs"><a href="/">Projects</a><a href="/blog/">Blog</a></nav>
+    </div>
+
+    <!-- One-time setup: paste a GitHub token -->
+    <article class="post" id="setup" hidden>
+        <h2>Connect GitHub</h2>
+        <p>This page posts straight to the site's repo, so it needs a GitHub token. You only do this once per browser; the token is stored only in this browser.</p>
+        <ol>
+            <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub &rarr; New fine-grained token</a>.</li>
+            <li>Repository access: <b>Only select repositories</b> &rarr; <b>leopoldli25.github.io</b>.</li>
+            <li>Permissions &rarr; Repository permissions &rarr; <b>Contents: Read and write</b>.</li>
+            <li>Generate it, copy it, and paste it here.</li>
+        </ol>
+        <input id="token" type="password" placeholder="github_pat_..." autocomplete="off" />
+        <button id="saveToken">Save</button>
+        <p class="status" id="setupStatus"></p>
+    </article>
+
+    <!-- Editor -->
+    <article class="post" id="editor" hidden>
+        <input id="title" type="text" placeholder="Title" />
+        <textarea id="body" placeholder="What did you work on? (Markdown works: **bold**, - lists, [links](https://...))"></textarea>
+        <div class="toolbar">
+            <label class="button">Add image<input id="imageInput" type="file" accept="image/*" multiple hidden /></label>
+            <button id="post">Post</button>
+        </div>
+        <p class="status" id="status"></p>
+        <h3>Preview</h3>
+        <div id="preview" class="preview"></div>
+        <p class="small"><a href="#" id="forget">Disconnect this browser</a></p>
+    </article>
+
+    <script>
+        var REPO = "leopoldli25/leopoldli25.github.io";
+        var API = "https://api.github.com/repos/" + REPO + "/contents/";
+        var TOKEN_KEY = "devlog-token", DRAFT_KEY = "devlog-draft";
+        var pendingImages = {}; // repo path -> { file, url }
+
+        function store(key, value) {
+            try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value); } catch (e) {}
+        }
+        function load(key) {
+            try { return localStorage.getItem(key); } catch (e) { return null; }
+        }
+        function $(id) { return document.getElementById(id); }
+
+        function show() {
+            var hasToken = !!load(TOKEN_KEY);
+            $("setup").hidden = hasToken;
+            $("editor").hidden = !hasToken;
+        }
+
+        async function gh(path, options) {
+            options = options || {};
+            options.headers = {
+                "Authorization": "Bearer " + load(TOKEN_KEY),
+                "Accept": "application/vnd.github+json"
+            };
+            return fetch(API + path, options);
+        }
+
+        // Token setup
+        $("saveToken").onclick = async function () {
+            var token = $("token").value.trim();
+            if (!token) return;
+            $("setupStatus").textContent = "Checking...";
+            var res = await fetch("https://api.github.com/repos/" + REPO, {
+                headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" }
+            });
+            var data = res.ok ? await res.json() : null;
+            if (!data || !data.permissions || !data.permissions.push) {
+                $("setupStatus").textContent = "That token can't write to " + REPO + ". Check the repo and Contents permission.";
+                return;
+            }
+            store(TOKEN_KEY, token);
+            $("token").value = "";
+            show();
+        };
+        $("forget").onclick = function (e) {
+            e.preventDefault();
+            if (confirm("Remove the GitHub token from this browser?")) { store(TOKEN_KEY, null); show(); }
+        };
+
+        // Draft autosave + preview
+        function render() {
+            var html = marked.parse($("body").value || "");
+            var preview = $("preview");
+            preview.innerHTML = ($("title").value ? "<h2>" + escapeHtml($("title").value) + "</h2>" : "") + html;
+            preview.querySelectorAll("img").forEach(function (img) {
+                var p = img.getAttribute("src");
+                if (pendingImages[p]) img.src = pendingImages[p].url;
+            });
+            store(DRAFT_KEY, JSON.stringify({ title: $("title").value, body: $("body").value }));
+        }
+        function escapeHtml(s) {
+            return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+        }
+        $("title").oninput = render;
+        $("body").oninput = render;
+        try {
+            var draft = JSON.parse(load(DRAFT_KEY) || "null");
+            if (draft) { $("title").value = draft.title || ""; $("body").value = draft.body || ""; }
+        } catch (e) {}
+
+        // Images: held in the browser until you click Post
+        function slugify(s) {
+            return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+        }
+        function insertAtCursor(text) {
+            var ta = $("body"), start = ta.selectionStart, end = ta.selectionEnd;
+            ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+            ta.selectionStart = ta.selectionEnd = start + text.length;
+            ta.focus();
+            render();
+        }
+        function addImage(file) {
+            var dot = file.name.lastIndexOf(".");
+            var ext = dot > 0 ? file.name.slice(dot).toLowerCase() : ".png";
+            var base = slugify(dot > 0 ? file.name.slice(0, dot) : file.name) || "image";
+            var path = "/images/blog/" + Date.now() + "-" + base + ext;
+            pendingImages[path] = { file: file, url: URL.createObjectURL(file) };
+            insertAtCursor("\n![](" + path + ")\n");
+        }
+        $("imageInput").onchange = function () {
+            Array.from(this.files).forEach(addImage);
+            this.value = "";
+        };
+        $("body").addEventListener("paste", function (e) {
+            var files = Array.from((e.clipboardData || {}).files || []).filter(function (f) { return f.type.indexOf("image/") === 0; });
+            if (files.length) { e.preventDefault(); files.forEach(addImage); }
+        });
+
+        // Posting
+        function toBase64Text(text) {
+            var bytes = new TextEncoder().encode(text), bin = "";
+            bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+            return btoa(bin);
+        }
+        function fileToBase64(file) {
+            return new Promise(function (resolve, reject) {
+                var r = new FileReader();
+                r.onload = function () { resolve(r.result.split(",")[1]); };
+                r.onerror = reject;
+                r.readAsDataURL(file);
+            });
+        }
+        function pad(n) { return String(n).padStart(2, "0"); }
+
+        $("post").onclick = async function () {
+            var title = $("title").value.trim(), body = $("body").value.trim();
+            if (!title || !body) { $("status").textContent = "Add a title and some text first."; return; }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                // Upload only the images still referenced in the text
+                for (var path in pendingImages) {
+                    if (body.indexOf(path) === -1) continue;
+                    $("status").textContent = "Uploading image...";
+                    var res = await gh(path.slice(1), {
+                        method: "PUT",
+                        body: JSON.stringify({ message: "Add dev log image", content: await fileToBase64(pendingImages[path].file) })
+                    });
+                    if (!res.ok) throw new Error("Image upload failed (" + res.status + ")");
+                }
+
+                var now = new Date();
+                var day = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+                var offset = -now.getTimezoneOffset();
+                var tz = (offset >= 0 ? "+" : "-") + pad(Math.floor(Math.abs(offset) / 60)) + pad(Math.abs(offset) % 60);
+                var stamp = day + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds()) + " " + tz;
+                var md = "---\ntitle: " + JSON.stringify(title) + "\ndate: " + stamp + "\n---\n" + body + "\n";
+                var slug = slugify(title) || "update";
+
+                $("status").textContent = "Posting...";
+                for (var n = 1; ; n++) {
+                    var name = "_posts/" + day + "-" + slug + (n > 1 ? "-" + n : "") + ".md";
+                    var res = await gh(name, {
+                        method: "PUT",
+                        body: JSON.stringify({ message: "Dev log: " + title, content: toBase64Text(md) })
+                    });
+                    if (res.ok) break;
+                    if (res.status !== 422 || n > 20) throw new Error("Posting failed (" + res.status + ")");
+                }
+
+                pendingImages = {};
+                $("title").value = "";
+                $("body").value = "";
+                render();
+                $("status").innerHTML = 'Posted! It shows up on the <a href="/blog/">dev log</a> in about a minute.';
+            } catch (err) {
+                $("status").textContent = err.message + ". Your draft is still here.";
+                if (/401|403/.test(err.message)) $("status").textContent += " Your token may have expired.";
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        show();
+        render();
+    </script>
+</body>
+</html>

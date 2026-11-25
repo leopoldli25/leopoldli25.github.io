@@ -11,4 +11,4 @@ title: What I worked on
 Write the update here in Markdown. Images: ![alt](/images/file.png)
 ```
 
-Commit and push (or use "Add file" on GitHub). Newest posts show first on `/blog/`.
+Easiest: open `/blog/write/` in the browser, type, and click Post (first visit asks for a fine-grained GitHub token with Contents read/write on this repo). Or commit a file manually. Newest posts show first on `/blog/`.

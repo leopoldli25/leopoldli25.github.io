@@ -11,6 +11,10 @@
 </head>
 <body>
     {% include header.html %}
+    <p class="new-post" id="newPost" hidden><a class="button" href="/blog/write/">+ New post</a></p>
+    <script>
+        try { if (localStorage.getItem("devlog-token")) document.getElementById("newPost").hidden = false; } catch (e) {}
+    </script>
     <div class="posts">
         {% for post in site.posts %}
         <article class="post" id="{{ post.slug }}">
