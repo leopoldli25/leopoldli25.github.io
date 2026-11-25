@@ -1,0 +1,26 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <title>Blog | Leopold Li</title>
+    <link rel="stylesheet" type="text/css" href="/styles.css" />
+</head>
+<body>
+    {% include header.html %}
+    <div class="posts">
+        {% for post in site.posts %}
+        <article class="post" id="{{ post.slug }}">
+            <p class="date">{{ post.date | date: "%B %-d, %Y" }}</p>
+            {% if post.title %}<h2><a href="#{{ post.slug }}">{{ post.title }}</a></h2>{% endif %}
+            {{ post.content }}
+        </article>
+        {% else %}
+        <article class="post"><p>No posts yet.</p></article>
+        {% endfor %}
+    </div>
+</body>
+</html>
