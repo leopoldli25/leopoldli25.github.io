@@ -13,11 +13,14 @@
     {% include header.html %}
     <p class="new-post" id="newPost" hidden><a class="button" href="/blog/write/">+ New post</a></p>
     <script>
-        try { if (localStorage.getItem("devlog-token")) document.getElementById("newPost").hidden = false; } catch (e) {}
+        var isOwner = false;
+        try { isOwner = !!localStorage.getItem("devlog-token"); } catch (e) {}
+        if (isOwner) document.getElementById("newPost").hidden = false;
     </script>
     <div class="posts">
         {% for post in site.posts %}
         <article class="post" id="{{ post.slug }}">
+            <a class="edit-link" href="/blog/write/?edit={{ post.path | remove_first: '_posts/' | uri_escape }}" hidden>Edit</a>
             <p class="date">{{ post.date | date: "%B %-d, %Y" }}</p>
             {% if post.title %}<h2><a href="#{{ post.slug }}">{{ post.title }}</a></h2>{% endif %}
             {{ post.content }}
@@ -26,5 +29,8 @@
         <article class="post"><p>No posts yet.</p></article>
         {% endfor %}
     </div>
+    <script>
+        if (isOwner) document.querySelectorAll(".edit-link").forEach(function (a) { a.hidden = false; });
+    </script>
 </body>
 </html>

@@ -32,6 +32,7 @@
 
     <!-- Editor -->
     <article class="post" id="editor" hidden>
+        <p class="editing" id="editingBanner" hidden>Editing <b id="editingName"></b> &middot; <a href="#" id="cancelEdit">cancel</a></p>
         <input id="title" type="text" placeholder="Title" />
         <textarea id="body" placeholder="What did you work on? (Markdown works: **bold**, - lists, [links](https://...))"></textarea>
         <div class="toolbar">
@@ -41,6 +42,12 @@
         <p class="status" id="status"></p>
         <h3>Preview</h3>
         <div id="preview" class="preview"></div>
+    </article>
+
+    <!-- Existing posts -->
+    <article class="post" id="manage" hidden>
+        <h3>Your posts</h3>
+        <ul class="post-list" id="postList"><li>Loading...</li></ul>
         <p class="small"><a href="#" id="forget">Disconnect this browser</a></p>
     </article>
 
@@ -49,6 +56,7 @@
         var API = "https://api.github.com/repos/" + REPO + "/contents/";
         var TOKEN_KEY = "devlog-token", DRAFT_KEY = "devlog-draft";
         var pendingImages = {}; // repo path -> { file, url }
+        var editing = null;     // { path, sha, frontMatter } while editing an existing post
 
         function store(key, value) {
             try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value); } catch (e) {}
@@ -57,15 +65,21 @@
             try { return localStorage.getItem(key); } catch (e) { return null; }
         }
         function $(id) { return document.getElementById(id); }
+        function escapeHtml(s) {
+            return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+        }
 
         function show() {
             var hasToken = !!load(TOKEN_KEY);
             $("setup").hidden = hasToken;
             $("editor").hidden = !hasToken;
+            $("manage").hidden = !hasToken;
+            if (hasToken) loadPostList();
         }
 
-        async function gh(path, options) {
+        function gh(path, options) {
             options = options || {};
+            options.cache = "no-store";
             options.headers = {
                 "Authorization": "Bearer " + load(TOKEN_KEY),
                 "Accept": "application/vnd.github+json"
@@ -73,7 +87,7 @@
             return fetch(API + path, options);
         }
 
-        // Token setup
+        // ---------- Token setup ----------
         $("saveToken").onclick = async function () {
             var token = $("token").value.trim();
             if (!token) return;
@@ -95,31 +109,60 @@
             if (confirm("Remove the GitHub token from this browser?")) { store(TOKEN_KEY, null); show(); }
         };
 
-        // Draft autosave + preview
+        // ---------- Encoding helpers ----------
+        function toBase64Text(text) {
+            var bytes = new TextEncoder().encode(text), bin = "";
+            bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+            return btoa(bin);
+        }
+        function fromBase64Text(b64) {
+            var bin = atob(b64.replace(/\s/g, ""));
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return new TextDecoder().decode(bytes);
+        }
+        function fileToBase64(file) {
+            return new Promise(function (resolve, reject) {
+                var r = new FileReader();
+                r.onload = function () { resolve(r.result.split(",")[1]); };
+                r.onerror = reject;
+                r.readAsDataURL(file);
+            });
+        }
+        function pad(n) { return String(n).padStart(2, "0"); }
+        function slugify(s) {
+            return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+        }
+
+        // ---------- Draft autosave + preview ----------
         function render() {
-            var html = marked.parse($("body").value || "");
             var preview = $("preview");
-            preview.innerHTML = ($("title").value ? "<h2>" + escapeHtml($("title").value) + "</h2>" : "") + html;
+            preview.innerHTML = ($("title").value ? "<h2>" + escapeHtml($("title").value) + "</h2>" : "") + marked.parse($("body").value || "");
             preview.querySelectorAll("img").forEach(function (img) {
                 var p = img.getAttribute("src");
                 if (pendingImages[p]) img.src = pendingImages[p].url;
             });
-            store(DRAFT_KEY, JSON.stringify({ title: $("title").value, body: $("body").value }));
-        }
-        function escapeHtml(s) {
-            return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+            store(DRAFT_KEY, JSON.stringify({ title: $("title").value, body: $("body").value, editing: editing }));
         }
         $("title").oninput = render;
         $("body").oninput = render;
-        try {
-            var draft = JSON.parse(load(DRAFT_KEY) || "null");
-            if (draft) { $("title").value = draft.title || ""; $("body").value = draft.body || ""; }
-        } catch (e) {}
 
-        // Images: held in the browser until you click Post
-        function slugify(s) {
-            return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+        function setEditing(state) {
+            editing = state;
+            $("editingBanner").hidden = !state;
+            $("editingName").textContent = state ? state.path.replace("_posts/", "") : "";
+            $("post").textContent = state ? "Save changes" : "Post";
         }
+        $("cancelEdit").onclick = function (e) {
+            e.preventDefault();
+            setEditing(null);
+            $("title").value = "";
+            $("body").value = "";
+            history.replaceState(null, "", location.pathname);
+            render();
+        };
+
+        // ---------- Images (held in the browser until you click Post) ----------
         function insertAtCursor(text) {
             var ta = $("body"), start = ta.selectionStart, end = ta.selectionEnd;
             ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
@@ -144,22 +187,70 @@
             if (files.length) { e.preventDefault(); files.forEach(addImage); }
         });
 
-        // Posting
-        function toBase64Text(text) {
-            var bytes = new TextEncoder().encode(text), bin = "";
-            bytes.forEach(function (b) { bin += String.fromCharCode(b); });
-            return btoa(bin);
+        // ---------- Existing posts: list, edit, delete ----------
+        function prettyName(name) {
+            var m = name.match(/^(\d{4}-\d{2}-\d{2})-(.*)\.md$/);
+            return m ? m[1] + " · " + m[2].replace(/-/g, " ") : name;
         }
-        function fileToBase64(file) {
-            return new Promise(function (resolve, reject) {
-                var r = new FileReader();
-                r.onload = function () { resolve(r.result.split(",")[1]); };
-                r.onerror = reject;
-                r.readAsDataURL(file);
+
+        async function loadPostList() {
+            var list = $("postList");
+            var res = await gh("_posts");
+            if (!res.ok) { list.innerHTML = "<li>Couldn't load posts (" + res.status + ").</li>"; return; }
+            var files = (await res.json()).filter(function (f) { return /\.md$/.test(f.name); });
+            files.sort(function (a, b) { return b.name.localeCompare(a.name); });
+            list.innerHTML = files.length ? "" : "<li>No posts yet.</li>";
+            files.forEach(function (f) {
+                var li = document.createElement("li");
+                li.innerHTML = "<span>" + escapeHtml(prettyName(f.name)) + "</span>";
+                var edit = document.createElement("button");
+                edit.textContent = "Edit";
+                edit.onclick = function () { startEdit(f.path); };
+                var del = document.createElement("button");
+                del.textContent = "Delete";
+                del.onclick = function () { deletePost(f.path, f.sha); };
+                li.appendChild(edit);
+                li.appendChild(del);
+                list.appendChild(li);
             });
         }
-        function pad(n) { return String(n).padStart(2, "0"); }
 
+        async function startEdit(path) {
+            $("status").textContent = "Loading post...";
+            var res = await gh(path);
+            if (!res.ok) { $("status").textContent = "Couldn't load that post (" + res.status + ")."; return; }
+            var data = await res.json();
+            var text = fromBase64Text(data.content);
+            var frontMatter = "", body = text, title = "";
+            var m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+            if (m) { frontMatter = m[1]; body = m[2]; }
+            var t = frontMatter.match(/^title:\s*(.*)$/m);
+            if (t) {
+                title = t[1].trim();
+                try { if (title[0] === '"') title = JSON.parse(title); } catch (e) {}
+                if (title[0] === "'") title = title.slice(1, -1).replace(/''/g, "'");
+            }
+            setEditing({ path: data.path, sha: data.sha, frontMatter: frontMatter });
+            $("title").value = title;
+            $("body").value = body.replace(/\n+$/, "");
+            $("status").textContent = "";
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        async function deletePost(path, sha) {
+            if (!confirm("Delete " + prettyName(path.replace("_posts/", "")) + "? This removes it from the dev log.")) return;
+            var res = await gh(path, {
+                method: "DELETE",
+                body: JSON.stringify({ message: "Delete dev log post " + path.replace("_posts/", ""), sha: sha })
+            });
+            if (!res.ok) { alert("Delete failed (" + res.status + ")."); return; }
+            if (editing && editing.path === path) $("cancelEdit").onclick(new Event("click"));
+            $("status").textContent = "Deleted. The dev log updates in about a minute.";
+            loadPostList();
+        }
+
+        // ---------- Posting / saving ----------
         $("post").onclick = async function () {
             var title = $("title").value.trim(), body = $("body").value.trim();
             if (!title || !body) { $("status").textContent = "Add a title and some text first."; return; }
@@ -177,38 +268,74 @@
                     if (!res.ok) throw new Error("Image upload failed (" + res.status + ")");
                 }
 
-                var now = new Date();
-                var day = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
-                var offset = -now.getTimezoneOffset();
-                var tz = (offset >= 0 ? "+" : "-") + pad(Math.floor(Math.abs(offset) / 60)) + pad(Math.abs(offset) % 60);
-                var stamp = day + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds()) + " " + tz;
-                var md = "---\ntitle: " + JSON.stringify(title) + "\ndate: " + stamp + "\n---\n" + body + "\n";
-                var slug = slugify(title) || "update";
-
-                $("status").textContent = "Posting...";
-                for (var n = 1; ; n++) {
-                    var name = "_posts/" + day + "-" + slug + (n > 1 ? "-" + n : "") + ".md";
-                    var res = await gh(name, {
+                if (editing) {
+                    // Keep the original date and any other front matter; just swap the title
+                    var fm = editing.frontMatter;
+                    var titleLine = "title: " + JSON.stringify(title);
+                    fm = /^title:.*$/m.test(fm) ? fm.replace(/^title:.*$/m, titleLine) : titleLine + (fm ? "\n" + fm : "");
+                    $("status").textContent = "Saving...";
+                    var res = await gh(editing.path, {
                         method: "PUT",
-                        body: JSON.stringify({ message: "Dev log: " + title, content: toBase64Text(md) })
+                        body: JSON.stringify({
+                            message: "Edit dev log: " + title,
+                            content: toBase64Text("---\n" + fm + "\n---\n" + body + "\n"),
+                            sha: editing.sha
+                        })
                     });
-                    if (res.ok) break;
-                    if (res.status !== 422 || n > 20) throw new Error("Posting failed (" + res.status + ")");
+                    if (res.status === 409) throw new Error("This post changed somewhere else. Reload and edit again");
+                    if (!res.ok) throw new Error("Saving failed (" + res.status + ")");
+                } else {
+                    var now = new Date();
+                    var day = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+                    var offset = -now.getTimezoneOffset();
+                    var tz = (offset >= 0 ? "+" : "-") + pad(Math.floor(Math.abs(offset) / 60)) + pad(Math.abs(offset) % 60);
+                    var stamp = day + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds()) + " " + tz;
+                    var md = "---\ntitle: " + JSON.stringify(title) + "\ndate: " + stamp + "\n---\n" + body + "\n";
+                    var slug = slugify(title) || "update";
+
+                    $("status").textContent = "Posting...";
+                    for (var n = 1; ; n++) {
+                        var name = "_posts/" + day + "-" + slug + (n > 1 ? "-" + n : "") + ".md";
+                        var res = await gh(name, {
+                            method: "PUT",
+                            body: JSON.stringify({ message: "Dev log: " + title, content: toBase64Text(md) })
+                        });
+                        if (res.ok) break;
+                        if (res.status !== 422 || n > 20) throw new Error("Posting failed (" + res.status + ")");
+                    }
                 }
 
+                var wasEditing = !!editing;
                 pendingImages = {};
+                setEditing(null);
+                history.replaceState(null, "", location.pathname);
                 $("title").value = "";
                 $("body").value = "";
                 render();
-                $("status").innerHTML = 'Posted! It shows up on the <a href="/blog/">dev log</a> in about a minute.';
+                $("status").innerHTML = (wasEditing ? "Saved!" : "Posted!") + ' It shows up on the <a href="/blog/">dev log</a> in about a minute.';
+                loadPostList();
             } catch (err) {
-                $("status").textContent = err.message + ". Your draft is still here.";
-                if (/401|403/.test(err.message)) $("status").textContent += " Your token may have expired.";
+                $("status").textContent = err.message + ". Your text is still here.";
+                if (/\((401|403)\)/.test(err.message)) $("status").textContent += " Your token may have expired.";
             } finally {
                 btn.disabled = false;
             }
         };
 
+        // ---------- Start ----------
+        var editParam = new URLSearchParams(location.search).get("edit");
+        if (editParam && load(TOKEN_KEY)) {
+            startEdit("_posts/" + editParam.replace(/^_posts\//, ""));
+        } else {
+            try {
+                var draft = JSON.parse(load(DRAFT_KEY) || "null");
+                if (draft) {
+                    $("title").value = draft.title || "";
+                    $("body").value = draft.body || "";
+                    if (draft.editing) setEditing(draft.editing);
+                }
+            } catch (e) {}
+        }
         show();
         render();
     </script>
