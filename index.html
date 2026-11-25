@@ -15,11 +15,17 @@
     </div>
     <div class="intro">
         <p>Hello, my name is Leopold Li. I graduated from UCLA in 2025 with a B.S. in Mathematics of Computation and I am currently getting my M.S. in Computer Science at Georgia Tech. I am a game designer and software engineer, and I have interned at HandsGames and FriendTimes working on mobile games in Unity.</p>
-        <p>I also play strategy games competitively: consistently Challenger in TFT (Neonify), Legend in Hearthstone, and Master in League of Legends.</p>
     </div>
     <div class="projects">
-        <div class="project" style="justify-content: flex-start;">
+        <div class="project">
             <h2>Penguin Party</h2>
+            <div class="slideshow">
+                <img class="active" src="images/penguin-baseball.jpg" alt="Penguin Party baseball mode" />
+                <img src="images/penguin-football.jpg" alt="Penguin Party football play selection" />
+                <img src="images/penguin-extraction.jpg" alt="Penguin Party co-op extraction mode" />
+                <img src="images/penguin-minigames.jpg" alt="Penguin Party minigame selection" />
+                <div class="dots"></div>
+            </div>
             <p>
                 Penguin Party is a multiplayer party and co-op extraction game for 1 to 8 players, made in Unity and C#. It has 6 different modes, including co-op extraction, baseball, and a party board game with 50 minigames.
                 To keep online play fair even with lag, every mode is either turn-based, simulated the same way on every machine from a shared match seed, or played in separate lanes for each player.
@@ -38,40 +44,6 @@
                 This is a 1v1 card game with online multiplayer with over 30 unique cards. Includes a functional deckbuilder and the ability to easily import and export decklists. Connect with other players by entering a code such as "ABCD" and clicking host, and then have them enter the same code and click connect.
             </p>
         </div>
-        <div class="project">
-            <h2>Minimize Loss</h2>
-            <img src="images/minimizeloss.png" alt="Minimize Loss" />
-            <p>
-                This is a simple minigame that I helped make for the EGaDS Mega Micro Jam 2022.
-                This game is a take on the famous Trolley Problem with the goal being to save as many people as possible by quickly choosing the path with the least people.<br /><br />
-                <a href="https://mysticalbilly.itch.io/minimize-loss">Play in Browser (Loud Sound Warning)</a><br />
-                <a href="https://egads-austin.itch.io/egads-mega-micro-jam-2022">Combined Game Jam Link</a>
-            </p>
-        </div>
-        <div class="project">
-            <h2>Let's Gooooo</h2>
-            <img src="images/letsgo.png" alt="Let's Gooooo" />
-            <p>
-                This is a hiking trail recommender website that I helped make for a hackathon. I designed the front-end using HTML, CSS, and Flutter.<br /><br />
-                <a href="https://devpost.com/software/let-s-gooooo">Devpost Link</a>
-            </p>
-        </div>
-        <div class="project">
-            <h2>Stable Stick</h2>
-            <img src="images/stablestick.png" alt="Stable Stick" />
-            <p>
-                This is a gimbal that I helped design and code for a selfie-based hackathon. <br /><br />
-                <a href="https://devpost.com/software/b-3yo9vl">Devpost Link</a>
-            </p>
-        </div>
-        <div class="project">
-            <h2>Autopark</h2>
-            <img src="images/autopark.png" alt="Autopark" />
-            <p>
-                This is a device that helps students learn how to park in tight spaces.<br /><br />
-                <a href="https://devpost.com/software/autopark-c93d0b">Devpost Link</a>
-            </p>
-        </div>
         <!--
         <div class="project">
             <h2>TeamfightTactics</h2>
@@ -82,5 +54,32 @@
         </div>
         -->
     </div>
+    <script>
+        document.querySelectorAll(".slideshow").forEach(function (show) {
+            var slides = show.querySelectorAll("img");
+            var dots = show.querySelector(".dots");
+            var current = 0;
+            var timer;
+            function go(n) {
+                slides[current].classList.remove("active");
+                dots.children[current].classList.remove("active");
+                current = (n + slides.length) % slides.length;
+                slides[current].classList.add("active");
+                dots.children[current].classList.add("active");
+            }
+            function start() {
+                clearInterval(timer);
+                timer = setInterval(function () { go(current + 1); }, 4000);
+            }
+            slides.forEach(function (_, i) {
+                var dot = document.createElement("button");
+                dot.setAttribute("aria-label", "Show image " + (i + 1));
+                if (i === 0) dot.classList.add("active");
+                dot.addEventListener("click", function () { go(i); start(); });
+                dots.appendChild(dot);
+            });
+            start();
+        });
+    </script>
 </body>
 </html>
